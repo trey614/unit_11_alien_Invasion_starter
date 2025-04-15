@@ -55,6 +55,10 @@ class AlienInvasion:
         elif event.key == pygame.K_SPACE:
             if self.ship.fire():
                 self.laser_sound.play()  # Play laser sound when firing
+        elif event.key == pygame.K_UP:
+         self.ship.moving_up = True
+        elif event.key == pygame.K_DOWN:
+         self.ship.moving_down = True
         elif event.key == pygame.K_q:
             self.running = False
 
@@ -64,6 +68,10 @@ class AlienInvasion:
             self.ship.moving_right = False
         elif event.key == pygame.K_LEFT:
             self.ship.moving_left = False
+        elif event.key == pygame.K_UP:
+            self.ship.moving_up = False
+        elif event.key == pygame.K_DOWN:
+            self.ship.moving_down = False
 
     def _update_screen(self):
         """Update the screen by redrawing everything."""

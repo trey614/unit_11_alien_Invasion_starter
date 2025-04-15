@@ -3,7 +3,7 @@ from bullet import Bullet
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from alien_invasion import AlienInvasion  # fixed typo: "inport" → "import"
+    from alien_invasion import AlienInvasion 
 
 class ShipArsenal:
     def __init__(self, game: "AlienInvasion"):
@@ -29,6 +29,6 @@ class ShipArsenal:
     def fire_bullet(self):
         if len(self.arsenal) < self.settings.bullet_amount:
             new_bullet = Bullet(self.game)
-            self.arsenal.add(new_bullet)  # fixed typo: colon → parenthesis
+            self.arsenal.add(new_bullet)  
             return True
         return False

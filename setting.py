@@ -13,6 +13,7 @@ class Settings:
         self.ship_w = 40
         self.ship_h = 60
         self.ship_speed = 5
+        self.ship_angle = 90
 
 
         self.bullet_file = Path.cwd() / "Assets" / "images" / "laserBlast.png"
