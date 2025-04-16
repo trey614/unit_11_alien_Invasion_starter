@@ -12,6 +12,7 @@ class ShipArsenal:
         self.screen = game.screen
         self.boundaries = game.screen.get_rect()
         self.arsenal = pygame.sprite.Group()
+       
 
     def update_arsenal(self):
         self.arsenal.update()
