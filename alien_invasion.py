@@ -3,7 +3,8 @@ import pygame
 from setting import Settings
 from ship import Ship
 from arsenal import ShipArsenal
-from alien import Alien
+#from alien import Alien
+from alien_fleet import AlienFleet
 
 class AlienInvasion:
     def __init__(self):
@@ -24,9 +25,8 @@ class AlienInvasion:
         self.ship = Ship(self, self.arsenal)
 
         # Initialize Alien Group and add at least one alien
-        self.aliens = pygame.sprite.Group()
-        alien = Alien(self, 800, 100)  # You can customize position
-        self.aliens.add(alien)
+        self.alien_Fleet = AlienFleet(self)
+        self.alien_Fleet.create_fleet()
 
         # Load and scale background image
         self.bg = pygame.image.load(self.settings.bg_file)
@@ -45,7 +45,7 @@ class AlienInvasion:
             self._check_events()
             self.ship.update()
             self.arsenal.update_arsenal()
-            self.aliens.update()  # Update all aliens
+            #self.aliens.update()  # Update all aliens
             self._update_screen()
 
         pygame.quit()
@@ -91,7 +91,7 @@ class AlienInvasion:
         self.screen.blit(self.bg, (0, 0))
         self.ship.draw()
         self.arsenal.draw()
-        self.aliens.draw(self.screen)
+        self.alien_Fleet.draw()
         pygame.display.flip()
         self.clock.tick(self.settings.FPS)
 
