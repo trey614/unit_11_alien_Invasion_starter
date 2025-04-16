@@ -16,29 +16,36 @@ class AlienFleet:
         self.create_fleet()
 
     def create_fleet(self):
-        alien_h = self.settings.alien_h
-        alien_w = self.settings.alien_w
-        screen_h = self.settings.screen_h
-        screen_w = self.settings.screen_w
+        alien_h = self.settings.alien_h  # Height of each alien
+        alien_w = self.settings.alien_w  # Width of each alien
+        screen_h = self.settings.screen_h  # Height of screen
+        screen_w = self.settings.screen_w  # Width of screen
 
-        fleet_h = self.calculate_fleet_size(alien_h, screen_h)
-        fleet_vertical_space = fleet_h * alien_h
-        y_offset = int((screen_h - fleet_vertical_space) // 2)
+        # How many fit vertically (rows) and horizontally (columns)
+        fleet_rows = self.calculate_vertical_count(alien_h, screen_h)
+        fleet_cols = self.calculate_horizontal_count(alien_w, screen_w)
 
-        # Position aliens on the right side with 10px padding
-        current_x = screen_w - alien_w - 10
+        # Right-align the fleet by adjusting x_offset to start from the far right
+        total_width = fleet_cols * alien_w  # Total width of all columns
+        x_offset = screen_w - total_width - 10  # Position fleet to the right with some margin
+        y_offset = (screen_h - fleet_rows * alien_h) // 2  # Center fleet vertically
 
-        for row in range(fleet_h):
-            current_y = alien_h * row + y_offset
-            self._create_alien(current_x, current_y)
+        for col in range(fleet_cols):
+            current_x = col * alien_w + x_offset  # Calculate x position for each column
+            for row in range(fleet_rows):
+                current_y = row * alien_h + y_offset
+                current_x = alien_w * col + x_offset
+                if row % 2 == 0 or col % 2 == 0:
+                    continue  # Calculate y position for each row
+                self._create_alien(current_x, current_y)
 
-    def calculate_fleet_size(self, alien_h, screen_h):
-        fleet_h = screen_h // alien_h
-        if fleet_h % 2 == 0:
-            fleet_h -= 1
-        else:
-            fleet_h -= 2
-        return fleet_h
+    def calculate_vertical_count(self, alien_h, screen_h):
+        count = screen_h // alien_h  # How many rows fit vertically
+        return max(1, count - 2)  # At least 1 row, minus some margin for spacing
+
+    def calculate_horizontal_count(self, alien_w, screen_w):
+        count = screen_w // alien_w  # How many columns fit horizontally
+        return max(1, count // 4)  # Only use ~1/4 of the screen width for columns
 
     def _create_alien(self, current_x: int, current_y: int):
         new_alien = Alien(self.game, current_x, current_y)
