@@ -20,8 +20,9 @@ class ShipArsenal:
 
     def _remove_bullets_offscreen(self):
         for bullet in self.arsenal.copy():
-            if bullet.rect.bottom <= 0:
+            if bullet.rect.left > self.boundaries.right:
                 self.arsenal.remove(bullet)
+
 
     def draw(self):
         for bullet in self.arsenal:
