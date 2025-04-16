@@ -28,14 +28,17 @@ class Alien(Sprite):
 
         # Use a floating point for precise movement
         self.x = float(self.rect.x)
+        self.y = float(self.rect.y)
 
     def update(self):
         """Move the alien up the screen."""
         temp_speed = self.settings.fleet_speed
         if self.check_edges():
             self.settings.fleet_direction *= -1
+            self.y += self.settings.fleet_dropspeed
         self.x -= temp_speed * self.settings.fleet_direction
         self.rect.x= self.x
+        self.rect.y = self.y
 
     def check_edges(self):
         return (self.rect.right>= self.boundaries.right or self.rect.left<= self.boundaries.left)
