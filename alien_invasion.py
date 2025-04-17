@@ -44,8 +44,8 @@ class AlienInvasion:
         while self.running:
             self._check_events()
             self.ship.update()
+            self.alien_Fleet.update_fleet()
             self.arsenal.update_arsenal()
-            #self.aliens.update()  # Update all aliens
             self._update_screen()
 
         pygame.quit()

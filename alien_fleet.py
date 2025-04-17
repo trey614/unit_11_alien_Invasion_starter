@@ -10,46 +10,48 @@ class AlienFleet:
         self.game = game
         self.settings = game.settings
         self.fleet = pygame.sprite.Group()
-        self.fleet_direction = self.settings.fleet_direction
-        self.fleet_drop_speed = self.settings.fleet_dropspeed
+        self.fleet_direction = self.settings.fleet_direction  # 1 for down, -1 for up
+        self.fleet_drop_speed = self.settings.fleet_dropspeed  # used to shift sideways
 
         self.create_fleet()
 
     def create_fleet(self):
-        alien_h = self.settings.alien_h  # Height of each alien
-        alien_w = self.settings.alien_w  # Width of each alien
-        screen_h = self.settings.screen_h  # Height of screen
-        screen_w = self.settings.screen_w  # Width of screen
+        alien_w = self.settings.alien_w
+        alien_h = self.settings.alien_h
+        screen_w = self.settings.screen_w
+        screen_h = self.settings.screen_h
 
-        # How many fit vertically (rows) and horizontally (columns)
-        fleet_rows = self.calculate_vertical_count(alien_h, screen_h)
-        fleet_cols = self.calculate_horizontal_count(alien_w, screen_w)
+        fleet_cols = 3  # number of vertical lines
+        fleet_rows = (screen_h - 2 * alien_h) // alien_h  # fits as many as possible vertically
 
-        # Right-align the fleet by adjusting x_offset to start from the far right
-        total_width = fleet_cols * alien_w  # Total width of all columns
-        x_offset = screen_w - total_width - 10  # Position fleet to the right with some margin
-        y_offset = (screen_h - fleet_rows * alien_h) // 2  # Center fleet vertically
+        # Align to far right
+        x_start = screen_w - (fleet_cols * alien_w) - 10
+        y_start = (screen_h - (fleet_rows * alien_h)) // 2
 
         for col in range(fleet_cols):
-            current_x = col * alien_w + x_offset  # Calculate x position for each column
             for row in range(fleet_rows):
-                current_y = row * alien_h + y_offset
-                current_x = alien_w * col + x_offset
-                if row % 2 == 0 or col % 2 == 0:
-                    continue  # Calculate y position for each row
-                self._create_alien(current_x, current_y)
+                x = x_start + col * alien_w
+                y = y_start + row * alien_h
+                self._create_alien(x, y)
 
-    def calculate_vertical_count(self, alien_h, screen_h):
-        count = screen_h // alien_h  # How many rows fit vertically
-        return max(1, count - 2)  # At least 1 row, minus some margin for spacing
+    def _create_alien(self, x: int, y: int):
+        alien = Alien(self, x, y)
+        self.fleet.add(alien)
 
-    def calculate_horizontal_count(self, alien_w, screen_w):
-        count = screen_w // alien_w  # How many columns fit horizontally
-        return max(1, count // 4)  # Only use ~1/4 of the screen width for columns
+    def _check_fleet_edges(self):
+        for alien in self.fleet:
+            if alien.check_edges():
+                self.fleet_direction *= -1  # Bounce (reverse direction)
+                self._advance_fleet()      # Move left
+                break
 
-    def _create_alien(self, current_x: int, current_y: int):
-        new_alien = Alien(self.game, current_x, current_y)
-        self.fleet.add(new_alien)
+    def _advance_fleet(self):
+        for alien in self.fleet:
+            alien.x -= self.fleet_drop_speed  # Shift the fleet slowly left
+
+    def update_fleet(self):
+        self._check_fleet_edges()
+        self.fleet.update()
 
     def draw(self):
         for alien in self.fleet:
