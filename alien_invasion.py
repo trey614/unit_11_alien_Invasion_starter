@@ -3,7 +3,6 @@ import pygame
 from setting import Settings
 from ship import Ship
 from arsenal import ShipArsenal
-#from alien import Alien
 from alien_fleet import AlienFleet
 
 class AlienInvasion:
@@ -11,7 +10,7 @@ class AlienInvasion:
         pygame.init()
         self.settings = Settings()
 
-        # Create the display screen
+        # Set up the display
         self.screen = pygame.display.set_mode(
             (self.settings.screen_w, self.settings.screen_h)
         )
@@ -20,13 +19,12 @@ class AlienInvasion:
         self.running = True
         self.clock = pygame.time.Clock()
 
-        # Initialize Arsenal and Ship objects
+        # Set up ship and arsenal
         self.arsenal = ShipArsenal(self)
         self.ship = Ship(self, self.arsenal)
 
-        # Initialize Alien Group and add at least one alien
-        self.alien_Fleet = AlienFleet(self)
-        self.alien_Fleet.create_fleet()
+        # Set up alien fleet
+        self.alien_fleet = AlienFleet(self)
 
         # Load and scale background image
         self.bg = pygame.image.load(self.settings.bg_file)
@@ -34,25 +32,64 @@ class AlienInvasion:
             self.bg, (self.settings.screen_w, self.settings.screen_h)
         )
 
-        # Initialize the sound system
+        # Initialize mixer and load sounds
         pygame.mixer.init()
         self.laser_sound = pygame.mixer.Sound(str(self.settings.laser_sound))
         self.laser_sound.set_volume(0.7)
+
+        self.impact_sound_bullet = pygame.mixer.Sound(self.settings.impact_sound)
+        self.impact_sound_bullet.set_volume(0.7)
+
+        self.impact_sound_ship = pygame.mixer.Sound(self.settings.impact_sound)
+        self.impact_sound_ship.set_volume(0.7)
 
     def run_game(self):
         """Main game loop."""
         while self.running:
             self._check_events()
             self.ship.update()
-            self.alien_Fleet.update_fleet()
+            self.alien_fleet.update_fleet()
             self.arsenal.update_arsenal()
+            self._check_collisions()
             self._update_screen()
 
         pygame.quit()
         sys.exit()
 
+    def _check_collisions(self):
+        """Handle all game collision logic."""
+        if self.alien_fleet.check_fleet_left():
+            self._reset_level()
+        # Bullet hits alien
+        collisions = pygame.sprite.groupcollide(
+            self.arsenal.arsenal, self.alien_fleet.fleet, True, True
+        )
+
+        if collisions:
+            self.impact_sound_bullet.play()
+
+        # Alien hits ship
+        if self.ship.check_collisions(self.alien_fleet.fleet):
+            self.impact_sound_ship.play()
+            self._reset_level()
+
+        
+
+        # Alien reaches left side
+        for alien in self.alien_fleet.fleet:
+            if alien.rect.left <= 0:
+                self._reset_level()
+                break
+
+
+    def _reset_level(self):
+        """Reset bullets and aliens when the player gets hit or aliens break through."""
+        self.arsenal.arsenal.empty()
+        self.alien_fleet.fleet.empty()
+        self.alien_fleet.create_fleet()
+        self.ship._center_ship()
+
     def _check_events(self):
-        """Check for events like key presses and quitting."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -60,7 +97,7 @@ class AlienInvasion:
                 self._check_keydown_events(event)
             elif event.type == pygame.KEYUP:
                 self._check_keyup_events(event)
-      
+
     def _check_keydown_events(self, event):
         if event.key == pygame.K_RIGHT:
             self.ship.moving_right = True
@@ -91,7 +128,7 @@ class AlienInvasion:
         self.screen.blit(self.bg, (0, 0))
         self.ship.draw()
         self.arsenal.draw()
-        self.alien_Fleet.draw()
+        self.alien_fleet.draw()
         pygame.display.flip()
         self.clock.tick(self.settings.FPS)
 

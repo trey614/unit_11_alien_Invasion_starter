@@ -11,7 +11,7 @@ class AlienFleet:
         self.settings = game.settings
         self.fleet = pygame.sprite.Group()
         self.fleet_direction = self.settings.fleet_direction  # 1 for down, -1 for up
-        self.fleet_drop_speed = self.settings.fleet_dropspeed  # used to shift sideways
+        self.fleet_drop_speed = self.settings.fleet_dropspeed  # amount to move left each bounce
 
         self.create_fleet()
 
@@ -21,8 +21,8 @@ class AlienFleet:
         screen_w = self.settings.screen_w
         screen_h = self.settings.screen_h
 
-        fleet_cols = 3  # number of vertical lines
-        fleet_rows = (screen_h - 2 * alien_h) // alien_h  # fits as many as possible vertically
+        fleet_cols = 3  # Number of vertical alien lines
+        fleet_rows = (screen_h - 2 * alien_h) // alien_h  # Fit as many vertically as possible
 
         # Align to far right
         x_start = screen_w - (fleet_cols * alien_w) - 10
@@ -39,20 +39,30 @@ class AlienFleet:
         self.fleet.add(alien)
 
     def _check_fleet_edges(self):
+        """Reverse direction and shift left when any alien hits top or bottom."""
         for alien in self.fleet:
             if alien.check_edges():
-                self.fleet_direction *= -1  # Bounce (reverse direction)
-                self._advance_fleet()      # Move left
+                self.fleet_direction *= -1  # Reverse vertical direction
+                self._advance_fleet()
                 break
 
     def _advance_fleet(self):
+        """Shift entire fleet left by drop speed."""
         for alien in self.fleet:
-            alien.x -= self.fleet_drop_speed  # Shift the fleet slowly left
+            alien.x -= self.fleet_drop_speed
+            alien.rect.x = alien.x
 
     def update_fleet(self):
         self._check_fleet_edges()
         self.fleet.update()
-
+      
     def draw(self):
         for alien in self.fleet:
             alien.draw_alien()
+    
+    def check_fleet_left(self):
+        alien: Alien
+        for alien in self.fleet:
+            if alien.rect.left >= self.settings.screen_w:
+                return True
+        return False
