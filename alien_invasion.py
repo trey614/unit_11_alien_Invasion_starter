@@ -2,13 +2,16 @@ import sys
 import pygame
 from setting import Settings
 from ship import Ship
+from game_stats import GameStats
 from arsenal import ShipArsenal
 from alien_fleet import AlienFleet
+from time import sleep
 
 class AlienInvasion:
     def __init__(self):
         pygame.init()
         self.settings = Settings()
+        self.game_stats = GameStats(self.settings.starting_ship_count)
 
         # Set up the display
         self.screen = pygame.display.set_mode(
@@ -42,15 +45,17 @@ class AlienInvasion:
 
         self.impact_sound_ship = pygame.mixer.Sound(self.settings.impact_sound)
         self.impact_sound_ship.set_volume(0.7)
+        self.game_active = True
 
     def run_game(self):
         """Main game loop."""
         while self.running:
             self._check_events()
-            self.ship.update()
-            self.alien_fleet.update_fleet()
+            if self.game_active:
+                self.ship.update()
+                self.alien_fleet.update_fleet()
+                self._check_collisions()
             self.arsenal.update_arsenal()
-            self._check_collisions()
             self._update_screen()
 
         pygame.quit()
@@ -59,7 +64,7 @@ class AlienInvasion:
     def _check_collisions(self):
         """Handle all game collision logic."""
         if self.alien_fleet.check_fleet_left():
-            self._reset_level()
+            self._check_game_status()
         # Bullet hits alien
         collisions = pygame.sprite.groupcollide(
             self.arsenal.arsenal, self.alien_fleet.fleet, True, True
@@ -71,7 +76,7 @@ class AlienInvasion:
         # Alien hits ship
         if self.ship.check_collisions(self.alien_fleet.fleet):
             self.impact_sound_ship.play()
-            self._reset_level()
+            self._check_game_status()
 
         
 
@@ -80,6 +85,16 @@ class AlienInvasion:
             if alien.rect.left <= 0:
                 self._reset_level()
                 break
+        if self.alien_fleet.check_destroyed_status():
+            self._reset_level()
+
+    def _check_game_status(self):
+        if self.game_stats.ship_limit >1:
+            self.game_stats.ship_limit -= 1
+            self._reset_level()
+            sleep(0.5)
+        else:
+            self.game_active = False
 
 
     def _reset_level(self):
