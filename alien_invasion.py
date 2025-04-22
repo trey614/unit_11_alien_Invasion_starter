@@ -6,14 +6,14 @@ from game_stats import GameStats
 from arsenal import ShipArsenal
 from alien_fleet import AlienFleet
 from time import sleep
-
+from button import Button
 class AlienInvasion:
     def __init__(self):
         # Initialize Pygame and game settings
         pygame.init()
         self.settings = Settings()
         self.game_stats = GameStats(self.settings.starting_ship_count)
-
+        self.settings.initialize_dynamic_settings()
         # Set up the game window
         self.screen = pygame.display.set_mode(
             (self.settings.screen_w, self.settings.screen_h)
@@ -46,9 +46,9 @@ class AlienInvasion:
 
         self.impact_sound_ship = pygame.mixer.Sound(self.settings.impact_sound)
         self.impact_sound_ship.set_volume(0.7)
-
+        self.play_button = Button(self, "Play")
         # Game state flag
-        self.game_active = True
+        self.game_active = False
 
     def run_game(self):
         """Main game loop that runs while the game is active."""
@@ -93,6 +93,8 @@ class AlienInvasion:
         # If all aliens are destroyed, start a new wave
         if self.alien_fleet.check_destroyed_status():
             self._reset_level()
+            self.settings.increase_difficulty()
+            
 
     def _check_game_status(self):
         """Check if player has remaining lives or end game."""
@@ -110,15 +112,28 @@ class AlienInvasion:
         self.alien_fleet.create_fleet()
         self.ship._center_ship()
 
+    def restart_game(self):
+        self.settings.initialize_dynamic_settings()
+        self._reset_level()
+        self.ship._center_ship()
+        self.game_active = True
+        pygame.mouse.set_visible(False)
+
     def _check_events(self):
         """Listen for keyboard and mouse input."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            elif event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN and self.game_active == True:
                 self._check_keydown_events(event)
             elif event.type == pygame.KEYUP:
                 self._check_keyup_events(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+               self._check_button_clicked()
+    def _check_button_clicked(self):
+        mouse_pos = pygame.mouse.get_pos()
+        if self.play_button.check_clicked(mouse_pos):
+            self.restart_game()
 
     def _check_keydown_events(self, event):
         """Handle keydown events."""
@@ -153,6 +168,9 @@ class AlienInvasion:
         self.ship.draw()  # Draw player ship
         self.arsenal.draw()  # Draw bullets
         self.alien_fleet.draw()  # Draw aliens
+        if not self.game_active:
+            self.play_button.draw()
+            pygame.mouse.set_visible(True)
         pygame.display.flip()  # Flip to updated display
         self.clock.tick(self.settings.FPS)  # Maintain frame rate
 
