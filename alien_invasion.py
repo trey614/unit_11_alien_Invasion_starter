@@ -12,7 +12,7 @@ class AlienInvasion:
         # Initialize Pygame and game settings
         pygame.init()
         self.settings = Settings()
-        self.game_stats = GameStats(self.settings.starting_ship_count)
+        self.game_stats = GameStats(self)
         self.settings.initialize_dynamic_settings()
         # Set up the game window
         self.screen = pygame.display.set_mode(
@@ -83,6 +83,7 @@ class AlienInvasion:
         if self.ship.check_collisions(self.alien_fleet.fleet):
             self.impact_sound_ship.play()
             self._check_game_status()
+            self.game_stats.update(collisions)
 
         # Reset level if any alien reaches the left screen edge
         for alien in self.alien_fleet.fleet:
@@ -94,12 +95,13 @@ class AlienInvasion:
         if self.alien_fleet.check_destroyed_status():
             self._reset_level()
             self.settings.increase_difficulty()
+            self.game_stats.update_level()
             
 
     def _check_game_status(self):
         """Check if player has remaining lives or end game."""
-        if self.game_stats.ship_limit > 1:
-            self.game_stats.ship_limit -= 1  # Decrease remaining lives
+        if self.game_stats.ships_left > 1:
+            self.game_stats.ships_left -= 1  # Decrease remaining lives
             self._reset_level()
             sleep(0.5)  # Short pause before new level
         else:
@@ -114,10 +116,12 @@ class AlienInvasion:
 
     def restart_game(self):
         self.settings.initialize_dynamic_settings()
+        self.game_stats.reset_stats()
         self._reset_level()
         self.ship._center_ship()
         self.game_active = True
         pygame.mouse.set_visible(False)
+
 
     def _check_events(self):
         """Listen for keyboard and mouse input."""

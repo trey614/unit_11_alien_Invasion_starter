@@ -13,7 +13,7 @@ class Settings:
 
         # Background settings
         self.bg_file = Path.cwd() / "Assets" / "images" / "Starbasesnow.png"  # Background image path
-        self.difficulty_scale = 1.1
+        self.difficulty_scale = 3.1
 
         # Ship settings
         self.ship_file = Path.cwd() / "Assets" / "images" / 'ship2(no bg).png'  # Ship image path
@@ -28,7 +28,7 @@ class Settings:
         self.laser_sound = Path.cwd() / "Assets" / "sound" / "laser.mp3"        # Sound for firing
         self.impact_sound = Path.cwd() / "Assets"/ "sound" / "impactSound.mp3"  # Sound for impacts
 
-        self.bullet_speed = 7                       # Speed of bullets
+        self.bullet_speed = 7                      # Speed of bullets
         self.bullet_w = 25                          # Bullet width
         self.bullet_h = 80                          # Bullet height
         self.bullet_amount = 5                      # Max number of bullets allowed on screen
@@ -57,10 +57,12 @@ class Settings:
         self.bullet_amount = 5
         self.fleet_speed = 2
         self.fleet_drop_speed = 40
-        self.bullet_w = 25
+        self.alien_points = 50
+        self.bullet_w = 250
+
         self.bullet_h = 80
 
     def increase_difficulty(self):
         self.ship_speed *= self.difficulty_scale
-        self.bulett_speed *= self.difficulty_scale
+        self.bullet_speed *= self.difficulty_scale
         self.fleet_speed *= self.difficulty_scale
