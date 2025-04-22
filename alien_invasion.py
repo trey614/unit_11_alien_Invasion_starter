@@ -8,88 +8,88 @@ from alien_fleet import AlienFleet
 from time import sleep
 from button import Button
 from hud import HUD
+
 class AlienInvasion:
+    """Main class to manage game behavior and assets."""
+
     def __init__(self):
-        # Initialize Pygame and game settings
+        """Initialize the game, settings, screen, and assets."""
         pygame.init()
         self.settings = Settings()
         self.game_stats = GameStats(self)
-        
         self.settings.initialize_dynamic_settings()
-        # Set up the game window
+
+        # Set up game screen
         self.screen = pygame.display.set_mode(
             (self.settings.screen_w, self.settings.screen_h)
         )
         pygame.display.set_caption(self.settings.name)
-        self.game_stats = GameStats(self)
+
+        # Game-related objects
         self.HUD = HUD(self)
-        self.running = True
         self.clock = pygame.time.Clock()
+        self.running = True
 
-        # Create player's arsenal (bullets) and ship
-        self.arsenal = ShipArsenal(self)
-        self.ship = Ship(self, self.arsenal)
+        # Game components
+        self.arsenal = ShipArsenal(self)     # Manages bullets
+        self.ship = Ship(self, self.arsenal) # Player's ship
+        self.alien_fleet = AlienFleet(self)  # Manages all alien sprites
 
-        # Create the alien fleet
-        self.alien_fleet = AlienFleet(self)
-
-        # Load and scale the background image
+        # Background image
         self.bg = pygame.image.load(self.settings.bg_file)
-        self.bg = pygame.transform.scale(
-            self.bg, (self.settings.screen_w, self.settings.screen_h)
-        )
-        # Initialize mixer and load sound effects
+        self.bg = pygame.transform.scale(self.bg, (self.settings.screen_w, self.settings.screen_h))
+
+        # Initialize sound effects
         pygame.mixer.init()
         self.laser_sound = pygame.mixer.Sound(str(self.settings.laser_sound))
         self.laser_sound.set_volume(0.7)
-
         self.impact_sound_bullet = pygame.mixer.Sound(self.settings.impact_sound)
         self.impact_sound_bullet.set_volume(0.7)
-
         self.impact_sound_ship = pygame.mixer.Sound(self.settings.impact_sound)
         self.impact_sound_ship.set_volume(0.7)
+
+        # UI elements
         self.play_button = Button(self, "Play")
-        # Game state flag
-        self.game_active = False
-        
+        self.game_active = False  # Starts in inactive state until Play is clicked
 
     def run_game(self):
-        """Main game loop that runs while the game is active."""
+        """Main loop that keeps the game running."""
         while self.running:
-            self._check_events()  # Handle player input
+            self._check_events()
 
             if self.game_active:
-                self.ship.update()  # Update ship movement
-                self.alien_fleet.update_fleet()  # Update alien fleet movement
-                self._check_collisions()  # Handle collisions
+                self.ship.update()
+                self.alien_fleet.update_fleet()
+                self._check_collisions()
 
-            self.arsenal.update_arsenal()  # Update bullet positions
-            self._update_screen()  # Redraw everything on the screen
+            self.arsenal.update_arsenal()
+            self._update_screen()
 
         pygame.quit()
         sys.exit()
 
     def _check_collisions(self):
-        """Handle all game collision logic."""
-        # If aliens reach the left side, check game state
+        """Detect and respond to collisions between entities."""
+        
+        # Check if aliens reached the left edge
         if self.alien_fleet.check_fleet_left():
             self._check_game_status()
 
-        # Detect bullet-alien collisions and remove both
+        # Check bullet-alien collisions
         collisions = pygame.sprite.groupcollide(
             self.arsenal.arsenal, self.alien_fleet.fleet, True, True
         )
         if collisions:
             self.impact_sound_bullet.play()
 
-        # Detect ship-alien collisions
+        # Check ship-alien collisions
         if self.ship.check_collisions(self.alien_fleet.fleet):
             self.impact_sound_ship.play()
             self._check_game_status()
             self.game_stats.update(collisions)
             self.HUD.update_scores()
 
-        # Reset level if any alien reaches the left screen edge
+        # If an alien reaches the screen's left side
         for alien in self.alien_fleet.fleet:
             if alien.rect.left <= 0:
                 self._reset_level()
@@ -100,30 +100,31 @@ class AlienInvasion:
             self._reset_level()
             self.settings.increase_difficulty()
             self.game_stats.update_level()
+            self.HUD.update_level()
 
+        # Add score from hit aliens
         for aliens_hit in collisions.values():
             self.game_stats.score += self.settings.alien_points * len(aliens_hit)
         self.HUD.update_scores()
 
-            
-
     def _check_game_status(self):
-        """Check if player has remaining lives or end game."""
+        """Check if player has remaining lives; end game if not."""
         if self.game_stats.ships_left > 1:
-            self.game_stats.ships_left -= 1  # Decrease remaining lives
+            self.game_stats.ships_left -= 1
             self._reset_level()
-            sleep(0.5)  # Short pause before new level
+            sleep(0.5)
         else:
-            self.game_active = False  # End the game
+            self.game_active = False
 
     def _reset_level(self):
-        """Reset bullets and aliens when the player gets hit or aliens break through."""
+        """Clear all bullets/aliens and reset ship and alien fleet."""
         self.arsenal.arsenal.empty()
         self.alien_fleet.fleet.empty()
         self.alien_fleet.create_fleet()
         self.ship._center_ship()
 
     def restart_game(self):
+        """Reset everything and restart the game after 'Play' is clicked."""
         self.settings.initialize_dynamic_settings()
         self.game_stats.reset_stats()
         self._reset_level()
@@ -132,26 +133,27 @@ class AlienInvasion:
         pygame.mouse.set_visible(False)
         self.HUD.update_scores()
 
-
     def _check_events(self):
-        """Listen for keyboard and mouse input."""
+        """Respond to key and mouse events."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
                 self.game_stats.save_scores()
-            elif event.type == pygame.KEYDOWN and self.game_active == True:
+            elif event.type == pygame.KEYDOWN and self.game_active:
                 self._check_keydown_events(event)
             elif event.type == pygame.KEYUP:
                 self._check_keyup_events(event)
             elif event.type == pygame.MOUSEBUTTONDOWN:
-               self._check_button_clicked()
+                self._check_button_clicked()
+
     def _check_button_clicked(self):
+        """Start a new game if the play button is clicked."""
         mouse_pos = pygame.mouse.get_pos()
         if self.play_button.check_clicked(mouse_pos):
             self.restart_game()
 
     def _check_keydown_events(self, event):
-        """Handle keydown events."""
+        """Handle key presses."""
         if event.key == pygame.K_RIGHT:
             self.ship.moving_right = True
         elif event.key == pygame.K_LEFT:
@@ -161,14 +163,14 @@ class AlienInvasion:
         elif event.key == pygame.K_DOWN:
             self.ship.moving_down = True
         elif event.key == pygame.K_SPACE:
-            if self.ship.fire():  # Fire a bullet if allowed
+            if self.ship.fire():
                 self.laser_sound.play()
         elif event.key == pygame.K_q:
             self.running = False
             self.game_stats.save_scores()
 
     def _check_keyup_events(self, event):
-        """Handle keyup events."""
+        """Handle key releases."""
         if event.key == pygame.K_RIGHT:
             self.ship.moving_right = False
         elif event.key == pygame.K_LEFT:
@@ -179,19 +181,21 @@ class AlienInvasion:
             self.ship.moving_down = False
 
     def _update_screen(self):
-        """Redraw all game elements on the screen."""
+        """Redraw all game elements and update the screen."""
         self.screen.blit(self.bg, (0, 0))  # Draw background
-        self.ship.draw()  # Draw player ship
-        self.arsenal.draw()  # Draw bullets
-        self.alien_fleet.draw()  # Draw aliens
+        self.ship.draw()
+        self.arsenal.draw()
+        self.alien_fleet.draw()
         self.HUD.draw()
+
         if not self.game_active:
             self.play_button.draw()
             pygame.mouse.set_visible(True)
-        pygame.display.flip()  # Flip to updated display
-        self.clock.tick(self.settings.FPS)  # Maintain frame rate
 
-# Run the game
+        pygame.display.flip()
+        self.clock.tick(self.settings.FPS)
+
+# Run the game if script is executed directly
 if __name__ == '__main__':
     ai = AlienInvasion()
     ai.run_game()
